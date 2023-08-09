@@ -5,7 +5,7 @@
 ### More at https://lazarus.name/demo/
 
 #### Input data
-![Rossi data](rossi.tab)
+![Rossi data](rossi.png)
 
 #### Tool output
 ![KM plot sample](lifelines_rossi_km.png)
