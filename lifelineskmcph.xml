@@ -1,0 +1,229 @@
+<tool name="lifelineskmcph" id="lifelineskmcph" version="0.01">
+  <!--Source in git at: https://github.com/fubar2/galaxy_tf_overlay-->
+  <!--Created by toolfactory@galaxy.org at 09/08/2023 17:43:16 using the Galaxy Tool Factory.-->
+  <description>Lifelines KM and optional Cox PH models</description>
+  <requirements>
+    <requirement version="1.5.3" type="package">pandas</requirement>
+    <requirement version="3.7.2" type="package">matplotlib</requirement>
+    <requirement version="0.27.7" type="package">lifelines</requirement>
+  </requirements>
+  <stdio>
+    <exit_code range="1:" level="fatal"/>
+  </stdio>
+  <version_command><![CDATA[echo "0.01"]]></version_command>
+  <command><![CDATA[python
+$runme
+--input_tab
+$input_tab
+--readme
+$readme
+--time
+'$time'
+--status
+'$status'
+--cphcols
+'$CPHcovariatecolumnnames'
+--title
+'$title'
+--header
+'$header'
+--group
+'$group'
+--image_type
+'$image_type'
+--image_dir
+'image_dir']]></command>
+  <configfiles>
+    <configfile name="runme"><![CDATA[#raw
+
+# script for a lifelines ToolFactory KM/CPH tool for Galaxy
+# km models for https://github.com/galaxyproject/tools-iuc/issues/5393
+# test as
+# python plotlykm.py --input_tab rossi.tab --htmlout "testfoo" --time "week" --status "arrest" --title "test" --image_dir images --cphcol="prio,age,race,paro,mar,fin"
+
+import argparse
+import os
+import sys
+
+import lifelines
+
+from matplotlib import pyplot as plt
+
+import pandas as pd
+
+# Ross Lazarus July 2023
+
+
+kmf = lifelines.KaplanMeierFitter()
+cph = lifelines.CoxPHFitter()
+
+parser = argparse.ArgumentParser()
+a = parser.add_argument
+a('--input_tab', default='', required=True)
+a('--header', default='')
+a('--htmlout', default="test_run.html")
+a('--group', default='')
+a('--time', default='', required=True)
+a('--status',default='', required=True)
+a('--cphcols',default='')
+a('--title', default='Default plot title')
+a('--image_type', default='png')
+a('--image_dir', default='images')
+a('--readme', default='run_log.txt')
+args = parser.parse_args()
+sys.stdout = open(args.readme, 'w')
+df = pd.read_csv(args.input_tab, sep='\t')
+NCOLS = df.columns.size
+NROWS = len(df.index)
+defaultcols = ['col%d' % (x+1) for x in range(NCOLS)]
+testcols = df.columns
+if len(args.header.strip()) > 0:
+    newcols = args.header.split(',')
+    if len(newcols) == NCOLS:
+        if (args.time in newcols) and (args.status in newcols):
+            df.columns = newcols
+        else:
+            sys.stderr.write('## CRITICAL USAGE ERROR (not a bug!): time %s and/or status %s not found in supplied header parameter %s' % (args.time, args.status, args.header))
+            sys.exit(4)
+    else:
+        sys.stderr.write('## CRITICAL USAGE ERROR (not a bug!): Supplied header %s has %d comma delimited header names - does not match the input tabular file %d columns' % (args.header, len(newcols), NCOLS))
+        sys.exit(5)
+else: # no header supplied - check for a real one that matches the x and y axis column names
+    colsok = (args.time in testcols) and (args.status in testcols) # if they match, probably ok...should use more code and logic..
+    if colsok:
+        df.columns = testcols # use actual header
+    else:
+        colsok = (args.time in defaultcols) and (args.status in defaultcols)
+        if colsok:
+            sys.stderr.write('replacing first row of data derived header %s with %s' % (testcols, defaultcols))
+            df.columns = defaultcols
+        else:
+            sys.stderr.write('## CRITICAL USAGE ERROR (not a bug!): time %s and status %s do not match anything in the file header, supplied header or automatic default column names %s' % (args.time, args.status, defaultcols))
+print('## Lifelines tool starting.\nUsing data header =', df.columns, 'time column =', args.time, 'status column =', args.status)
+os.makedirs(args.image_dir, exist_ok=True)
+fig, ax = plt.subplots()
+if args.group > '':
+    names = []
+    times = []
+    events = []
+    rmst = []
+    for name, grouped_df in df.groupby(args.group):
+        T = grouped_df[args.time]
+        E = grouped_df[args.status]
+        gfit = kmf.fit(T, E, label=name)
+        kmf.plot_survival_function(ax=ax)
+        rst = lifelines.utils.restricted_mean_survival_time(gfit)
+        rmst.append(rst)
+        names.append(str(name))
+        times.append(T)
+        events.append(E)
+    ax.set_title(args.title)
+    fig.savefig(os.path.join(args.image_dir,'KM_%s.png' % args.title))
+    ngroup = len(names)
+    if  ngroup == 2: # run logrank test if 2 groups
+        results = lifelines.statistics.logrank_test(times[0], times[1], events[0], events[1], alpha=.99)
+        print('Logrank test for %s - %s vs %s\n' % (args.group, names[0], names[1]))
+        results.print_summary()
+    elif ngroup > 1:
+        fig, ax = plt.subplots(nrows=ngroup, ncols=1, sharex=True)
+        for i, rst in rmst:
+            lifelines.plotting.rmst_plot(rst, ax=ax)
+        fig.savefig(os.path.join(args.image_dir,'RMST_%s.png' % args.title))
+else:
+    kmf.fit(df[args.time], df[args.status])
+    kmf.plot_survival_function(ax=ax)
+    ax.set_title(args.title)
+    fig.savefig(os.path.join(args.image_dir,'KM_%s.png' % args.title))
+if len(args.cphcols) > 0:
+    fig, ax = plt.subplots()
+    ax.set_title('Cox PH model: %s' % args.title)
+    cphcols = args.cphcols.strip().split(',')
+    cphcols = [x.strip() for x in cphcols]
+    notfound = sum([(x not in df.columns) for x in cphcols])
+    if notfound > 0:
+        sys.stderr.write('## CRITICAL USAGE ERROR (not a bug!): One or more requested Cox PH columns %s not found in supplied column header %s' % (args.cphcols, df.columns))
+        sys.exit(6)
+    print('### Lifelines test of Proportional Hazards results with %s as covariates on %s' % (', '.join(cphcols), args.title))
+    cphcols += [args.time, args.status]
+    cphdf = df[cphcols]
+    cph.fit(cphdf, duration_col=args.time, event_col=args.status)
+    cph.print_summary()
+    cphaxes = cph.check_assumptions(cphdf, p_value_threshold=0.01, show_plots=True)
+    for i, ax in enumerate(cphaxes):
+        figr = ax[0].get_figure()
+        titl = figr._suptitle.get_text().replace(' ','_').replace("'","")
+        oname = os.path.join(args.image_dir,'CPH%s.%s' % (titl, args.image_type))
+        figr.savefig(oname)
+
+
+#end raw]]></configfile>
+  </configfiles>
+  <inputs>
+    <param name="input_tab" type="data" optional="false" label="Tabular input file for failure time testing." help="Must have a column with a measure of time and status (0,1) at observation." format="tabular" multiple="false"/>
+    <param name="time" type="text" value="week" label="Name of column containing a time to observation" help="Use a column name from the file header if the data has one, or use one from the list supplied below, or use col1....colN otherwise to select the correct column"/>
+    <param name="status" type="text" value="arrest" label="Status at observation. Typically 1=alive, 0=deceased for life-table observations" help="Use a column name from the header if the file has one, or use one from the list supplied below, or use col1....colN otherwise to select the correct column"/>
+    <param name="CPHcovariatecolumnnames" type="text" value="prio,age,race,paro,mar,fin" label="Optional comma delimited column names to use as covariates in the Cox Proportional Hazards model" help="Leave blank for no Cox PH model tests "/>
+    <param name="title" type="text" value="KM and CPH in lifelines test" label="Title for this lifelines analysis" help="Special characters will probably be escaped so do not use them"/>
+    <param name="header" type="text" value="" label="Optional comma delimited list of column names to use for this tabular file. Default is None when col1...coln will be used if no header row in the input data" help="The column names supplied for time, status and so on MUST match either this supplied list, or if none, the original file header if it exists, or col1...coln as the default of last resort."/>
+    <param name="group" type="text" value="race" label="Optional group column name for KM plot" help="If there are exactly 2 groups, a log-rank statistic will be generated as part of the Kaplan-Meier test."/>
+    <param name="image_type" type="select" label="Output format for all images" help="">
+      <option value="png">Portable Network Graphics .png format</option>
+      <option value="jpg">JPEG</option>
+      <option value="pdf">PDF</option>
+      <option value="tiff">TIFF</option>
+    </param>
+  </inputs>
+  <outputs>
+    <collection name="image_dir" type="list" label="Images from $title on $input_tab.element_identifier">
+      <discover_datasets pattern="__name_and_ext__" directory="image_dir" visible="false"/>
+    </collection>
+    <data name="readme" format="txt" label="Lifelines_km_cph $title on $input_tab.element_identifier" hidden="false"/>
+  </outputs>
+  <tests>
+    <test>
+      <output_collection name="image_dir"/>
+      <output name="readme" value="readme_sample" compare="sim_size" delta="1000"/>
+      <param name="input_tab" value="input_tab_sample"/>
+      <param name="time" value="week"/>
+      <param name="status" value="arrest"/>
+      <param name="CPHcovariatecolumnnames" value="prio,age,race,paro,mar,fin"/>
+      <param name="title" value="KM and CPH in lifelines test"/>
+      <param name="header" value=""/>
+      <param name="group" value="race"/>
+      <param name="image_type" value="png"/>
+    </test>
+  </tests>
+  <help><![CDATA[
+
+This is a wrapper for some elementary life table analysis functions from the Lifelines package - see https://lifelines.readthedocs.io/en/latest for the full story
+
+
+
+Given a Galaxy tabular dataset with suitable indicators for time and status at observation, this tool can perform some simple life-table analyses and produce some useful plots. Kaplan-Meier is the default. Cox Proportional Hazards model will be tested if covariates to include are provided.
+
+
+
+1. Kaplan-Meier survival analysis - see https://lifelines.readthedocs.io/en/latest/Survival%20analysis%20with%20lifelines.html
+
+    This is always performed and a survival curve is plotted. 
+
+    If there is an optional "group" column, the plot will show each group separately. If there are *exactly* two groups, a log-rank test for difference is performed and reported
+
+
+
+2. The Cox Proportional Hazards model can be tested, if a comma separated list of covariate column names is supplied on the tool form.
+
+    These are used in as covariates. 
+
+    Although not usually a real problem, some diagnostics and advice about the assumption of proportional hazards are are also provided as outputs - see   https://lifelines.readthedocs.io/en/latest/Survival%20Regression.html
+
+
+
+A big shout out to the lifelines authors - no R code needed - nice job, thanks!
+
+ ]]></help>
+  <citations>
+    <citation type="doi">10.1093/bioinformatics/bts573</citation>
+  </citations>
+</tool>
+
