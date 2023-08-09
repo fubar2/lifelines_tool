@@ -1,20 +1,19 @@
 # lifelines_tool - lifelines statistical package wrapped as a Galaxy tool.
 
+## Galaxy tool to run failure time models using lifelines
+
 ## Install to your Galaxy server from the toolshed - search for lifelines_tool owned by fubar2
 
 ### More at https://lazarus.name/demo/
 
-#### Input data
-![Rossi data](rossi.png)
+#### Using the Rossi sample input data from lifelines, tool outputs include:
 
-#### Tool output
 ![KM plot sample](lifelines_rossi_km.png)
 and
 ![KM plot sample](lifelines_rossi_schoenfeld.png)
 and
 ![KM plot sample](lifelines_rossi_report.png)
 
-Galaxy tool to run failure time models using lifelines
 
 Runs Kaplan-Meier and generates a plot. Optional grouping variable.
 If 2 groups, runs a log-rank test for difference.
