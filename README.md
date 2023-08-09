@@ -12,7 +12,7 @@
 and
 ![KM plot sample](lifelines_rossi_schoenfeld.png)
 and
-![KM plot sample](lifelines_rossi_report.png)
+![KM plot sample](lifelines_report.png)
 
 
 Runs Kaplan-Meier and generates a plot. Optional grouping variable.
