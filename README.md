@@ -1,28 +1,33 @@
 # lifelines_tool - lifelines statistical package wrapped as a Galaxy tool.
 
-## Galaxy tool to run failure time models using lifelines
+A Galaxy tool for right censored failure time data.
 
-## Install to your Galaxy server from the toolshed - search for lifelines_km_cph_tool owned by fubar2
+Provides Kaplan-Meier plots with confidence intervals, and optional Cox proportional hazards models
 
-### More at https://lazarus.name/demo/
+Uses the [lifelines](https://lifelines.readthedocs.io/en/latest/index.html) package.
 
-#### Using the Rossi sample input data from lifelines, tool outputs include:
+### Install to your Galaxy server from the toolshed - search for lifelines_km_cph_tool owned by fubar2
 
-![KM plot sample](lifelines_rossi_km.png)
-and
-![KM plot sample](lifelines_rossi_schoenfeld.png)
-and
-![KM plot sample](lifelines_report.png)
+More at https://lazarus.name/demo/
 
+#### Using the Rossi sample recidivism data from lifelines:
 
 Runs Kaplan-Meier and generates a plot. Optional grouping variable.
-If 2 groups, runs a log-rank test for difference.
+
 Plots show confidence intervals
 
-If a list of covariate column names is provided, these are used in a
-Cox Proportional Hazards model with tests for proportionality.
+![KM plot sample](lifelines_rossi_km.png)
 
-Also included are partial plots for each Cox-PH model covariate like these from the Rossi recidivism lifelines sample data
+If 2 groups, runs a log-rank test for difference.
+
+![KM plot sample](lifelines_report.png)
+
+If a comma separated list (for example: prio, age, race, mar, fin) of covariate column names is provided,
+a Cox proportional hazards model is run, the assumption of proportionality is tested, and
+recommendations made.
+![KM plot sample](lifelines_rossi_schoenfeld.png)
+
+Also included are partial plots for each covariate like these from the Rossi recidivism lifelines sample data
 used in the tool test.
 
 ![C-PH partial plot samples](agepartialrossi.png)
