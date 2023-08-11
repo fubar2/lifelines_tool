@@ -100,21 +100,22 @@ else:
     print('#### No grouping variable, so no log rank or other Kaplan-Meier statistical output is available')
 survdf = lifelines.utils.survival_table_from_events(df[args.time], df[args.status])
 lifedf = lifelines.utils.survival_table_from_events(df[args.time], df[args.status], collapse=True)
-print("Survival table using time %s and event %s" % (args.time, args.status))
+print("#### Survival table using time %s and event %s" % (args.time, args.status))
 with pd.option_context('display.max_rows', None,
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
     print(survdf)
-print("Life table using time %s and event %s" % (args.time, args.status))
+print("#### Life table using time %s and event %s" % (args.time, args.status))
 with pd.option_context('display.max_rows', None,
                        'display.max_columns', None,
                        'display.precision', 3,
                        ):
     print(lifedf)
-outpath = os.path.join(args.image_dir,'survival_table.tabular')
+titl = args.title.replace(' ','_')
+outpath = os.path.join(args.image_dir,'%s_survival_table.tabular' % titl)
 survdf.to_csv(outpath, sep='\t')
-outpath = os.path.join(args.image_dir,'life_table.tabular')
+outpath = os.path.join(args.image_dir,'%s_life_table.tabular' % titl)
 lifedf.to_csv(outpath, sep='\t')
 if len(args.cphcols) > 0:
     fig, ax = plt.subplots()
