@@ -1,6 +1,6 @@
 <tool name="lifelineskmcph" id="lifelineskmcph" version="0.01">
   <!--Source in git at: https://github.com/fubar2/galaxy_tf_overlay-->
-  <!--Created by toolfactory@galaxy.org at 10/08/2023 15:48:43 using the Galaxy Tool Factory.-->
+  <!--Created by toolfactory@galaxy.org at 11/08/2023 17:35:49 using the Galaxy Tool Factory.-->
   <description>Lifelines KM and optional Cox PH models</description>
   <requirements>
     <requirement version="1.5.3" type="package">pandas</requirement>
@@ -104,11 +104,11 @@ else: # no header supplied - check for a real one that matches the x and y axis 
     else:
         colsok = (args.time in defaultcols) and (args.status in defaultcols)
         if colsok:
-            sys.stderr.write('replacing first row of data derived header %s with %s' % (testcols, defaultcols))
+            print('Replacing first row of data derived header %s with %s' % (testcols, defaultcols))
             df.columns = defaultcols
         else:
             sys.stderr.write('## CRITICAL USAGE ERROR (not a bug!): time %s and status %s do not match anything in the file header, supplied header or automatic default column names %s' % (args.time, args.status, defaultcols))
-print('## Lifelines tool starting.\nUsing data header =', df.columns, 'time column =', args.time, 'status column =', args.status)
+print('## Lifelines tool\nInput data header =', df.columns, 'time column =', args.time, 'status column =', args.status)
 os.makedirs(args.image_dir, exist_ok=True)
 fig, ax = plt.subplots()
 if args.group > '':
@@ -136,6 +136,25 @@ else:
     ax.set_title(args.title)
     fig.savefig(os.path.join(args.image_dir,'KM_%s.png' % args.title))
     print('#### No grouping variable, so no log rank or other Kaplan-Meier statistical output is available')
+survdf = lifelines.utils.survival_table_from_events(df[args.time], df[args.status])
+lifedf = lifelines.utils.survival_table_from_events(df[args.time], df[args.status], collapse=True)
+print("#### Survival table using time %s and event %s" % (args.time, args.status))
+with pd.option_context('display.max_rows', None,
+                       'display.max_columns', None,
+                       'display.precision', 3,
+                       ):
+    print(survdf)
+print("#### Life table using time %s and event %s" % (args.time, args.status))
+with pd.option_context('display.max_rows', None,
+                       'display.max_columns', None,
+                       'display.precision', 3,
+                       ):
+    print(lifedf)
+titl = args.title.replace(' ','_')
+outpath = os.path.join(args.image_dir,'%s_survival_table.tabular' % titl)
+survdf.to_csv(outpath, sep='\t')
+outpath = os.path.join(args.image_dir,'%s_life_table.tabular' % titl)
+lifedf.to_csv(outpath, sep='\t')
 if len(args.cphcols) > 0:
     fig, ax = plt.subplots()
     ax.set_title('Cox-PH model: %s' % args.title)
@@ -153,7 +172,7 @@ if len(args.cphcols) > 0:
     cph.fit(cphdf, duration_col=args.time, event_col=args.status)
     cph.print_summary()
     for i, cov in enumerate(colsdf.columns):
-         if ucolcounts[i] > 10:
+         if ucolcounts[i] > 10: # a hack - assume categories are sparse - if not imaginary quintiles will have to do
              v = pd.Series.tolist(cphdf[cov].quantile(QVALS))
              vdt = df.dtypes[cov]
              if vdt == 'int64':

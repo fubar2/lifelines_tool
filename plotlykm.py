@@ -98,6 +98,24 @@ else:
     ax.set_title(args.title)
     fig.savefig(os.path.join(args.image_dir,'KM_%s.png' % args.title))
     print('#### No grouping variable, so no log rank or other Kaplan-Meier statistical output is available')
+survdf = lifelines.utils.survival_table_from_events(df[args.time], df[args.status])
+lifedf = lifelines.utils.survival_table_from_events(df[args.time], df[args.status], collapse=True)
+print("Survival table using time %s and event %s" % (args.time, args.status))
+with pd.option_context('display.max_rows', None,
+                       'display.max_columns', None,
+                       'display.precision', 3,
+                       ):
+    print(survdf)
+print("Life table using time %s and event %s" % (args.time, args.status))
+with pd.option_context('display.max_rows', None,
+                       'display.max_columns', None,
+                       'display.precision', 3,
+                       ):
+    print(lifedf)
+outpath = os.path.join(args.image_dir,'survival_table.tabular')
+survdf.to_csv(outpath, sep='\t')
+outpath = os.path.join(args.image_dir,'life_table.tabular')
+lifedf.to_csv(outpath, sep='\t')
 if len(args.cphcols) > 0:
     fig, ax = plt.subplots()
     ax.set_title('Cox-PH model: %s' % args.title)

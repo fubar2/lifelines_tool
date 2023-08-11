@@ -1,5 +1,5 @@
-## Lifelines tool starting.
-Using data header = Index(['Unnamed: 0', 'week', 'arrest', 'fin', 'age', 'race', 'wexp', 'mar',
+## Lifelines tool
+Input data header = Index(['Unnamed: 0', 'week', 'arrest', 'fin', 'age', 'race', 'wexp', 'mar',
        'paro', 'prio'],
       dtype='object') time column = week status column = arrest
 Logrank test for race - 0 vs 1
@@ -14,6 +14,66 @@ degrees_of_freedom = 1
 ---
  test_statistic    p  -log2(p)
            0.58 0.45      1.16
+#### Survival table using time week and event arrest
+          removed  observed  censored  entrance  at_risk
+event_at                                                
+0.0             0         0         0       432      432
+1.0             1         1         0         0      432
+2.0             1         1         0         0      431
+3.0             1         1         0         0      430
+4.0             1         1         0         0      429
+5.0             1         1         0         0      428
+6.0             1         1         0         0      427
+7.0             1         1         0         0      426
+8.0             5         5         0         0      425
+9.0             2         2         0         0      420
+10.0            1         1         0         0      418
+11.0            2         2         0         0      417
+12.0            2         2         0         0      415
+13.0            1         1         0         0      413
+14.0            3         3         0         0      412
+15.0            2         2         0         0      409
+16.0            2         2         0         0      407
+17.0            3         3         0         0      405
+18.0            3         3         0         0      402
+19.0            2         2         0         0      399
+20.0            5         5         0         0      397
+21.0            2         2         0         0      392
+22.0            1         1         0         0      390
+23.0            1         1         0         0      389
+24.0            4         4         0         0      388
+25.0            3         3         0         0      384
+26.0            3         3         0         0      381
+27.0            2         2         0         0      378
+28.0            2         2         0         0      376
+30.0            2         2         0         0      374
+31.0            1         1         0         0      372
+32.0            2         2         0         0      371
+33.0            2         2         0         0      369
+34.0            2         2         0         0      367
+35.0            4         4         0         0      365
+36.0            3         3         0         0      361
+37.0            4         4         0         0      358
+38.0            1         1         0         0      354
+39.0            2         2         0         0      353
+40.0            4         4         0         0      351
+42.0            2         2         0         0      347
+43.0            4         4         0         0      345
+44.0            2         2         0         0      341
+45.0            2         2         0         0      339
+46.0            4         4         0         0      337
+47.0            1         1         0         0      333
+48.0            2         2         0         0      332
+49.0            5         5         0         0      330
+50.0            3         3         0         0      325
+52.0          322         4       318         0      322
+#### Life table using time week and event arrest
+                  removed  observed  censored  at_risk
+event_at                                              
+(-0.001, 13.844]       20        20         0      432
+(13.844, 27.687]       36        36         0      412
+(27.687, 41.531]       29        29         0      376
+(41.531, 55.374]      347        29       318      347
 ### Lifelines test of Proportional Hazards results with prio, age, race, paro, mar, fin as covariates on KM and CPH in lifelines test
 <lifelines.CoxPHFitter: fitted with 432 total observations, 318 right-censored observations>
              duration col = 'week'
@@ -22,7 +82,7 @@ degrees_of_freedom = 1
    number of observations = 432
 number of events observed = 114
    partial log-likelihood = -659.00
-         time fit was run = 2023-08-10 05:49:04 UTC
+         time fit was run = 2023-08-11 07:36:10 UTC
 
 ---
             coef  exp(coef)   se(coef)   coef lower 95%   coef upper 95%  exp(coef) lower 95%  exp(coef) upper 95%
