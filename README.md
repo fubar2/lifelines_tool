@@ -1,34 +1,29 @@
-# lifelines_tool - lifelines statistical package wrapped as a Galaxy tool.
+### lifelines_tool - lifelines survival analysis python package wrapped as a Galaxy tool.
 
-A Galaxy tool for right censored failure time data.
-
-Provides Kaplan-Meier plots with confidence intervals, and optional Cox proportional hazards models
-
-Uses the [lifelines](https://lifelines.readthedocs.io/en/latest/index.html) package.
-
-### Install to your Galaxy server from the toolshed - search for lifelines_km_cph_tool owned by fubar2
-
-More at https://lazarus.name/demo/
+1. A Galaxy tool for right censored failure time data.
+2. Provides Kaplan-Meier plots with confidence intervals, and optional Cox proportional hazards models
+3. Uses the [lifelines](https://lifelines.readthedocs.io/en/latest/index.html) package.
+4. Install to your Galaxy server from the toolshed - search for lifelines_km_cph_tool owned by fubar2
 
 #### Using the Rossi sample recidivism data from lifelines:
 
-Runs Kaplan-Meier and generates a plot. Optional grouping variable.
-
-Plots show confidence intervals
+Runs Kaplan-Meier and generates a plot. Optional grouping variable race was supplied, so plots show confidence intervals
 
 ![KM plot sample](lifelines_rossi_km.png)
 
-If 2 groups, runs a log-rank test for difference.
+If 2 groups, runs a log-rank test for difference in the report.
 
 ![KM plot sample](lifelines_report.png)
 
 If a comma separated list (for example: prio, age, race, mar, fin) of covariate column names is provided,
 a Cox proportional hazards model is run, the assumption of proportionality is tested, and
 recommendations made.
+
 ![KM plot sample](lifelines_rossi_schoenfeld.png)
 
-Also included are partial plots for each covariate like these from the Rossi recidivism lifelines sample data
-used in the tool test.
+Partial plots for each covariate. Quintiles are used if there are >10 distinct values in the column.
+If you have non-ordinal covariates with >10 categores, this will produce garbage plots, but the model will also be
+hard to interpret so good luck.
 
 ![C-PH partial plot samples](agepartialrossi.png)
 
